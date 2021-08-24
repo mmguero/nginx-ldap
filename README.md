@@ -101,6 +101,7 @@ The contents of `nginx_ldap.conf` will vary depending on how the LDAP server is 
 * **`group_attribute`** - the group attribute name which contains the member object (e.g., `member` or `memberUid`)
 * **`group_attribute_is_dn`** - whether or not to search for the user's full distinguished name as the value in the group's member attribute
 * **`require`** and **`satisfy`** - `require user`, `require group` and `require valid_user` can be used in conjunction with `satisfy any` or `satisfy all` to limit the users that are allowed access
+* `referral` - setting this value to `off` (vs. `on`) can be useful when authenticating against read-only directory servers
 
 Before starting NGINX, edit `nginx/nginx_ldap.conf` according to the specifics of your LDAP server and directory tree structure. Using a LDAP search tool such as [`ldapsearch`](https://www.openldap.org/software/man.cgi?query=ldapsearch) in Linux or [`dsquery`](https://social.technet.microsoft.com/wiki/contents/articles/2195.active-directory-dsquery-commands.aspx) in Windows may be of help as you formulate the configuration. Your changes should be made within the curly braces of the `ldap_server ad_server { … }` section.
 
