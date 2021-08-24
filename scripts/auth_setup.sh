@@ -50,11 +50,14 @@ htpasswd -b $HTPASSWD_CREATE_FLAG -B ./htpasswd "$USERNAME" "$PASSWORD" >/dev/nu
 # if the username has changed, remove the previous username from htpasswd
 [[ -n "$USERNAME_PREVIOUS" ]] && [ "$USERNAME" != "$USERNAME_PREVIOUS" ] && sed -i "/^$USERNAME_PREVIOUS:/d" ./htpasswd
 
-source ../.ldap_config_defaults 2>/dev/null || true
+echo ""
+LDAP_DEFAULT_SERVER_TYPE=${LDAP_SERVER_TYPE:-""}
+while [[ $LDAP_DEFAULT_SERVER_TYPE != "openldap" ]] && [[ $LDAP_DEFAULT_SERVER_TYPE != "winldap" ]]; do
+  read -p "openldap or winldap: " LDAP_DEFAULT_SERVER_TYPE
+done
 LDAP_DEFAULT_PROTO=${LDAP_PROTO:-"ldap://"}
 LDAP_DEFAULT_HOST=${LDAP_HOST:-"ds.example.com"}
 LDAP_DEFAULT_PORT=${LDAP_PORT:-"3268"}
-LDAP_DEFAULT_SERVER_TYPE=${LDAP_SERVER_TYPE:-"winldap"}
 if [[ "$LDAP_DEFAULT_SERVER_TYPE" = 'openldap' ]]; then
   LDAP_DEFAULT_URI='DC=example,DC=com?uid?sub?(objectClass=posixAccount)'
   LDAP_DEFAULT_GROUP_ATTR=memberuid
@@ -66,13 +69,15 @@ fi
 [[ ! -f nginx_ldap.conf ]] && cat <<EOF > nginx_ldap.conf
 # This is a sample configuration for the ldap_server section of nginx.conf.
 # Yours will vary depending on how your Active Directory/LDAP server is configured.
-# See https://github.com/kvspb/nginx-auth-ldap#available-config-parameters for options.
+# See https://github.com/mmguero-dev/nginx-auth-ldap#available-config-parameters for options.
 
 ldap_server ad_server {
   url "${LDAP_DEFAULT_PROTO}${LDAP_DEFAULT_HOST}:${LDAP_DEFAULT_PORT}/${LDAP_DEFAULT_URI}";
 
   binddn "bind_dn";
   binddn_passwd "bind_dn_password";
+
+  referral off;
 
   group_attribute ${LDAP_DEFAULT_GROUP_ATTR};
   group_attribute_is_dn on;
