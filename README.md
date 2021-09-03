@@ -11,7 +11,7 @@ It can be used with [docker](https://docs.docker.com/get-docker/)/[docker-compos
 
 * **Either**
     * [docker](https://docs.docker.com/get-docker/)/[docker-compose](https://docs.docker.com/compose/install/)
-    * [podman](https://podman.io/getting-started/installation)/[podman-compose](https://raw.githubusercontent.com/containers/podman-compose/devel/podman_compose.py) (see [podman-rootless-system-prep.sh](scripts/podman-rootless-system-prep.sh) for an example system preparation script for a RHEL 8-compatible system)
+    * [podman](https://podman.io/getting-started/installation)/[podman-compose](https://raw.githubusercontent.com/containers/podman-compose/devel/podman_compose.py) (see [`podman-rootless-prep-01-system.sh`](scripts/podman-rootless-prep-01-system.sh) and [`podman-rootless-prep-02-local.sh`](scripts/podman-rootless-prep-02-local.sh) for an example system preparation script for a RHEL 8-compatible system)
 
 ## Configuring LDAP Authentication
 
