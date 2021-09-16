@@ -12,7 +12,7 @@ LABEL maintainer="mero.mero.guero@gmail.com"
 LABEL org.opencontainers.image.authors='mero.mero.guero@gmail.com'
 LABEL org.opencontainers.image.url='https://github.com/mmguero/nginx-ldap'
 LABEL org.opencontainers.image.source='https://github.com/mmguero/nginx-ldap'
-LABEL org.opencontainers.image.title='mmguero/nginx-ldap'
+LABEL org.opencontainers.image.title='ghcr.io/mmguero/nginx-ldap'
 LABEL org.opencontainers.image.description='Dockerized NGINX with LDAP Authentication'
 
 ARG DEFAULT_UID=1000
