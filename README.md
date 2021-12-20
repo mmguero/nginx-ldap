@@ -1,5 +1,7 @@
 # NGINX Reverse Proxy with Active Directory/Lightweight Directory Access Protocol (LDAP) Authentication
 
+![Docker Image](https://github.com/mmguero/nginx-ldap/workflows/nginx-ldap-build-push-ghcr/badge.svg)
+
 This setup uses [NGINX](https://www.nginx.com/) with the [nginx-auth-ldap](https://github.com/mmguero-dev/nginx-auth-ldap) authentication module to perform the following functions for an HTTP service:
 
 * reverse proxy HTTP connections over HTTPS
