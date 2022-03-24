@@ -6,7 +6,7 @@
 
 ####################################################################################
 
-FROM alpine:3.14
+FROM alpine:3.15
 
 LABEL maintainer="mero.mero.guero@gmail.com"
 LABEL org.opencontainers.image.authors='mero.mero.guero@gmail.com'
@@ -29,7 +29,10 @@ ENV TERM xterm
 
 USER root
 
-# authentication method: encrypted HTTP basic authentication ('true') vs nginx-auth-ldap ('false')
+# encryption method: HTTPS ('true') vs. unencrypted HTTP ('false') vs. unauthenticated ('no_authentication')
+ARG NGINX_SSL=true
+
+# authentication method: HTTP basic authentication ('true') vs nginx-auth-ldap ('false')
 ARG NGINX_BASIC_AUTH=true
 
 # NGINX LDAP (NGINX_BASIC_AUTH=false) can support LDAP, LDAPS, or LDAP+StartTLS.
@@ -47,6 +50,7 @@ ARG NGINX_LDAP_TLS_STUNNEL_CHECK_HOST=
 ARG NGINX_LDAP_TLS_STUNNEL_CHECK_IP=
 ARG NGINX_LDAP_TLS_STUNNEL_VERIFY_LEVEL=2
 
+ENV NGINX_SSL $NGINX_SSL
 ENV NGINX_BASIC_AUTH $NGINX_BASIC_AUTH
 ENV NGINX_LDAP_TLS_STUNNEL $NGINX_LDAP_TLS_STUNNEL
 ENV NGINX_LDAP_TLS_STUNNEL_CHECK_HOST $NGINX_LDAP_TLS_STUNNEL_CHECK_HOST
@@ -54,11 +58,11 @@ ENV NGINX_LDAP_TLS_STUNNEL_CHECK_IP $NGINX_LDAP_TLS_STUNNEL_CHECK_IP
 ENV NGINX_LDAP_TLS_STUNNEL_VERIFY_LEVEL $NGINX_LDAP_TLS_STUNNEL_VERIFY_LEVEL
 
 # build latest nginx with nginx-auth-ldap
-ENV NGINX_VERSION=1.20.1
+ENV NGINX_VERSION=1.20.2
 ENV NGINX_AUTH_LDAP_BRANCH=master
 
-ADD http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz /nginx.tar.gz
 ADD https://codeload.github.com/mmguero-dev/nginx-auth-ldap/tar.gz/$NGINX_AUTH_LDAP_BRANCH /nginx-auth-ldap.tar.gz
+ADD http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz /nginx.tar.gz
 ADD https://raw.githubusercontent.com/mmguero/docker/master/shared/docker-uid-gid-setup.sh /usr/local/bin/docker-uid-gid-setup.sh
 
 RUN set -x ; \
@@ -109,6 +113,8 @@ RUN set -x ; \
     --with-http_v2_module \
     --add-module=/usr/src/nginx-auth-ldap \
   " ; \
+  apk update --no-cache; \
+  apk upgrade --no-cache; \
   apk add --no-cache curl shadow; \
   addgroup -g ${DEFAULT_GID} -S ${PGROUP} ; \
   adduser -S -D -H -u ${DEFAULT_UID} -h /var/cache/nginx -s /sbin/nologin -G ${PGROUP} -g ${PUSER} ${PUSER} ; \

@@ -27,7 +27,14 @@ if [ "$socketMissing" = 1 -a "$1" = 'supervisord' -a "$2" = '-c' -a "$3" = '/etc
   exit 1
 fi
 
-# set up for NGINX HTTP basic vs. LDAP/LDAPS/LDAP+StartTLS auth
+# set up for HTTPS/HTTP and NGINX HTTP basic vs. LDAP/LDAPS/LDAP+StartTLS auth
+
+# "include" file that sets 'ssl on' and indicates the locations of the PEM files
+NGINX_SSL_ON_CONF=/etc/nginx/nginx_ssl_on_config.conf
+# "include" file that sets 'ssl off'
+NGINX_SSL_OFF_CONF=/etc/nginx/nginx_ssl_off_config.conf
+# "include" symlink name which, at runtime, will point to either the ON of OFF file
+NGINX_SSL_CONF=/etc/nginx/nginx_ssl_config.conf
 
 # a blank file just to use as an "include" placeholder for the nginx's LDAP config when LDAP is not used
 NGINX_BLANK_CONF=/etc/nginx/nginx_blank.conf
@@ -37,6 +44,9 @@ NGINX_BASIC_AUTH_CONF=/etc/nginx/nginx_auth_basic.conf
 
 # "include" file for auth_ldap, prompt, and "auth_ldap_servers" name
 NGINX_LDAP_AUTH_CONF=/etc/nginx/nginx_auth_ldap.conf
+
+# "include" file for fully disabling authentication
+NGINX_NO_AUTH_CONF=/etc/nginx/nginx_auth_disabled.conf
 
 # volume-mounted user configuration containing "ldap_server ad_server" section with URL, binddn, etc.
 NGINX_LDAP_USER_CONF=/etc/nginx/nginx_ldap.conf
@@ -88,6 +98,14 @@ if (( ${#CA_FILES} )) ; then
   popd >/dev/null 2>&1
 fi
 
+if [[ -z $NGINX_SSL ]] || [[ "$NGINX_SSL" != "false" ]]; then
+  # doing encrypted HTTPS
+  ln -sf "$NGINX_SSL_ON_CONF" "$NGINX_SSL_CONF"
+else
+  # doing unencrypted HTTP (not recommended)
+  ln -sf "$NGINX_SSL_OFF_CONF" "$NGINX_SSL_CONF"
+fi
+
 if [[ -z $NGINX_BASIC_AUTH ]] || [[ "$NGINX_BASIC_AUTH" == "true" ]]; then
   # doing HTTP basic auth instead of ldap
 
@@ -97,7 +115,18 @@ if [[ -z $NGINX_BASIC_AUTH ]] || [[ "$NGINX_BASIC_AUTH" == "true" ]]; then
   # ldap configuration is empty
   ln -sf "$NGINX_BLANK_CONF" "$NGINX_RUNTIME_LDAP_CONF"
 
+elif [[ "$NGINX_BASIC_AUTH" == "no_authentication" ]]; then
+  # completely disabling authentication (not recommended)
+
+  # point nginx_auth_rt.conf to nginx_auth_disabled.conf
+  ln -sf "$NGINX_NO_AUTH_CONF" "$NGINX_RUNTIME_AUTH_CONF"
+
+  # ldap configuration is empty
+  ln -sf "$NGINX_BLANK_CONF" "$NGINX_RUNTIME_LDAP_CONF"
+
 else
+  # ldap authentication
+
   # point nginx_auth_rt.conf to nginx_auth_ldap.conf
   ln -sf "$NGINX_LDAP_AUTH_CONF" "$NGINX_RUNTIME_AUTH_CONF"
 
