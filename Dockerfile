@@ -115,7 +115,7 @@ RUN set -x ; \
   " ; \
   apk update --no-cache; \
   apk upgrade --no-cache; \
-  apk add --no-cache curl shadow; \
+  apk add --no-cache curl shadow libressl; \
   addgroup -g ${DEFAULT_GID} -S ${PGROUP} ; \
   adduser -S -D -H -u ${DEFAULT_UID} -h /var/cache/nginx -s /sbin/nologin -G ${PGROUP} -g ${PUSER} ${PUSER} ; \
   addgroup ${PUSER} shadow ; \
@@ -127,7 +127,6 @@ RUN set -x ; \
     geoip-dev \
     gnupg \
     libc-dev \
-    libressl \
     libressl-dev \
     libxslt-dev \
     linux-headers \
