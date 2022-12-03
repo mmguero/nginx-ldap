@@ -6,7 +6,7 @@
 
 ####################################################################################
 
-FROM alpine:3.15
+FROM alpine:3.17
 
 LABEL maintainer="mero.mero.guero@gmail.com"
 LABEL org.opencontainers.image.authors='mero.mero.guero@gmail.com'
@@ -127,6 +127,7 @@ RUN set -x ; \
     geoip-dev \
     gnupg \
     libc-dev \
+    libressl \
     libressl-dev \
     libxslt-dev \
     linux-headers \
