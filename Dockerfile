@@ -6,7 +6,7 @@
 
 ####################################################################################
 
-FROM alpine:3.17
+FROM alpine:3.18
 
 LABEL maintainer="mero.mero.guero@gmail.com"
 LABEL org.opencontainers.image.authors='mero.mero.guero@gmail.com'
