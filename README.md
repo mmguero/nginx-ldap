@@ -7,7 +7,7 @@ This setup uses [NGINX](https://www.nginx.com/) with the [nginx-auth-ldap](https
 * reverse proxy HTTP connections over HTTPS
 * handle authentication via Active Directory/Lightweight Directory Access Protocol (LDAP)
 
-It can be used with [docker](https://docs.docker.com/get-docker/)/[docker-compose](https://docs.docker.com/compose/install/) or [podman](https://podman.io/)/[podman-compose](https://github.com/containers/podman-compose) to encapsulate the NGINX runtime on the host. A pre-built container image can be found on GitHub's container registry as [ghcr.io/mmguero/nginx-ldap](https://github.com/mmguero/nginx-ldap/pkgs/container/nginx-ldap).
+It can be used with [docker](https://docs.docker.com/get-docker/)/[docker-compose](https://docs.docker.com/compose/install/) or [podman](https://podman.io/)/[podman-compose](https://github.com/containers/podman-compose) to encapsulate the NGINX runtime on the host. A pre-built container image can be found on GitHub's container registry as [oci.guero.top/nginx-ldap](https://github.com/mmguero/nginx-ldap/pkgs/container/nginx-ldap).
 
 ## System Requirements
 
