@@ -46,7 +46,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: oci.guero.top/nginx-ldap:latest
+    image: oci.guero.org/nginx-ldap:latest
     container_name: nginx-ldap
     hostname: nginx-ldap
     restart: "no"
