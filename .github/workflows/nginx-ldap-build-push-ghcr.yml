@@ -15,7 +15,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/nginx-ldap
   IMAGE_TAG: latest
-  IMAGE_ARCH: amd64
+  IMAGE_ARCH: amd64,arm64
   REPO_CONTEXT: .
   REPO_CONTAINERFILE: ./Dockerfile
 
