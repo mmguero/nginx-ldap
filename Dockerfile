@@ -2,11 +2,10 @@
 # thanks to:  nginx                       -  https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
 #             kvspb/nginx-auth-ldap       -  https://github.com/kvspb/nginx-auth-ldap
 #             tiredofit/docker-nginx-ldap -  https://github.com/tiredofit/docker-nginx-ldap/blob/master/Dockerfile
-#             jwilder/nginx-proxy         -  https://github.com/jwilder/nginx-proxy/blob/master/Dockerfile.alpine
 
 ####################################################################################
 
-FROM alpine:3.18
+FROM alpine:3.20
 
 LABEL maintainer="mero.mero.guero@gmail.com"
 LABEL org.opencontainers.image.authors='mero.mero.guero@gmail.com'
@@ -24,6 +23,7 @@ ENV PGROUP "nginx"
 # not dropping privileges globally so nginx and stunnel can bind privileged ports internally.
 # nginx itself will drop privileges to "nginx" user for worker processes
 ENV PUSER_PRIV_DROP false
+USER root
 
 ENV TERM xterm
 
@@ -58,10 +58,13 @@ ENV NGINX_LDAP_TLS_STUNNEL_CHECK_IP $NGINX_LDAP_TLS_STUNNEL_CHECK_IP
 ENV NGINX_LDAP_TLS_STUNNEL_VERIFY_LEVEL $NGINX_LDAP_TLS_STUNNEL_VERIFY_LEVEL
 
 # build latest nginx with nginx-auth-ldap
-ENV NGINX_VERSION=1.20.2
+ENV NGINX_VERSION=1.22.1
 ENV NGINX_AUTH_LDAP_BRANCH=master
+ENV NGINX_HTTP_SUB_FILTER_BRANCH=master
 
+# NGINX source
 ADD https://codeload.github.com/mmguero-dev/nginx-auth-ldap/tar.gz/$NGINX_AUTH_LDAP_BRANCH /nginx-auth-ldap.tar.gz
+ADD https://codeload.github.com/yaoweibin/ngx_http_substitutions_filter_module/tar.gz/$NGINX_HTTP_SUB_FILTER_BRANCH /ngx_http_substitutions_filter_module-master.tar.gz
 ADD http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz /nginx.tar.gz
 ADD https://raw.githubusercontent.com/mmguero/docker/master/shared/docker-uid-gid-setup.sh /usr/local/bin/docker-uid-gid-setup.sh
 
@@ -112,10 +115,11 @@ RUN set -x ; \
     --with-file-aio \
     --with-http_v2_module \
     --add-module=/usr/src/nginx-auth-ldap \
+    --add-module=/usr/src/ngx_http_substitutions_filter_module \
   " ; \
   apk update --no-cache; \
   apk upgrade --no-cache; \
-  apk add --no-cache curl shadow rsync libressl; \
+  apk add --no-cache curl rsync shadow openssl; \
   addgroup -g ${DEFAULT_GID} -S ${PGROUP} ; \
   adduser -S -D -H -u ${DEFAULT_UID} -h /var/cache/nginx -s /sbin/nologin -G ${PGROUP} -g ${PUSER} ${PUSER} ; \
   addgroup ${PUSER} shadow ; \
@@ -127,7 +131,7 @@ RUN set -x ; \
     geoip-dev \
     gnupg \
     libc-dev \
-    libressl-dev \
+    openssl-dev \
     libxslt-dev \
     linux-headers \
     make \
@@ -138,9 +142,10 @@ RUN set -x ; \
     zlib-dev \
     ; \
     \
-  mkdir -p /usr/src/nginx-auth-ldap /www /www/logs/nginx ; \
+  mkdir -p /usr/src/nginx-auth-ldap /usr/src/ngx_http_substitutions_filter_module /www /www/logs/nginx /var/log/nginx ; \
   tar -zxC /usr/src -f /nginx.tar.gz ; \
   tar -zxC /usr/src/nginx-auth-ldap --strip=1 -f /nginx-auth-ldap.tar.gz ; \
+  tar -zxC /usr/src/ngx_http_substitutions_filter_module --strip=1 -f /ngx_http_substitutions_filter_module-master.tar.gz ; \
   cd /usr/src/nginx-$NGINX_VERSION ; \
     ./configure $CONFIG --with-debug ; \
     make -j$(getconf _NPROCESSORS_ONLN) ; \
@@ -154,7 +159,7 @@ RUN set -x ; \
     make -j$(getconf _NPROCESSORS_ONLN) ; \
     make install ; \
   rm -rf /etc/nginx/html/ ; \
-  mkdir -p /etc/nginx/conf.d/ /usr/share/nginx/html/ ; \
+  mkdir -p /etc/nginx/conf.d/ /etc/nginx/auth/ /usr/share/nginx/html/ ; \
     install -m644 html/index.html /usr/share/nginx/html/ ; \
     install -m644 html/50x.html /usr/share/nginx/html/ ; \
     install -m755 objs/nginx-debug /usr/sbin/nginx-debug ; \
@@ -182,13 +187,15 @@ RUN set -x ; \
         | xargs -r apk info --installed \
         | sort -u \
     )" ; \
-  apk add --no-cache --virtual .nginx-rundeps $runDeps ca-certificates bash wget openssl apache2-utils openldap stunnel supervisor tzdata; \
+  apk add --no-cache --virtual .nginx-rundeps $runDeps ca-certificates bash jq wget apache2-utils openldap shadow stunnel supervisor tini tzdata; \
   update-ca-certificates; \
   apk del .nginx-build-deps ; \
   apk del .gettext ; \
   mv /tmp/envsubst /usr/local/bin/ ; \
-  rm -rf /usr/src/* /var/tmp/* /var/cache/apk/* /nginx.tar.gz /nginx-auth-ldap.tar.gz; \
+  rm -rf /usr/src/* /var/tmp/* /var/cache/apk/* /nginx.tar.gz /nginx-auth-ldap.tar.gz /ngx_http_substitutions_filter_module-master.tar.gz; \
   touch /etc/nginx/nginx_ldap.conf /etc/nginx/nginx_blank.conf && \
+  find /usr/share/nginx/html/ -type d -exec chmod 755 "{}" \; && \
+  find /usr/share/nginx/html/ -type f -exec chmod 644 "{}" \; && \
   ln -sf /dev/stdout /var/log/nginx/access.log && \
   ln -sf /dev/stderr /var/log/nginx/error.log && \
   chmod 755 /usr/local/bin/docker-uid-gid-setup.sh
@@ -201,7 +208,10 @@ EXPOSE 80
 
 VOLUME ["/etc/nginx/certs", "/etc/nginx/dhparam"]
 
-ENTRYPOINT ["/usr/local/bin/docker-uid-gid-setup.sh", "/usr/local/bin/docker_entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", \
+            "--", \
+            "/usr/local/bin/docker-uid-gid-setup.sh", \
+            "/usr/local/bin/docker_entrypoint.sh"]
 
 CMD ["supervisord", "-c", "/etc/supervisord.conf", "-u", "root", "-n"]
 
